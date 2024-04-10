@@ -1,0 +1,194 @@
+---
+title: "Lab 7/HW 8"
+output: html_document
+date: "2024-04-04"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+require(plyr)
+require(dplyr)
+require(tidyverse)
+require(ggplot2)
+require(stargazer)
+```
+
+
+1. My Study Group = Chris and Isamari
+
+2. Research Articles
+
+a) "Family outcome disparities between sexual minority and heterosexual families: a systematic review and meta-analysis" Zhang, et al. (Zhang et al., 2023)
+
+The number of sexual minority families has increased over the past few years, this study aims to combine evidence in past studies regarding sexual minority families and children psychosocial outcomes or identify social risk factors in comparison with heterosexual families. The results were that sexual minority families yielded better performance in children's mental and social adjustment, as well as the parent-child dynamic performing better than heterosexual families. Yet, there was less couple relationship satisfaction, parent mental health, stress, or family function in sexual minority families compared to heterosexual families. In conclusion, seuxal minority and heterosexual families yielded similar results, with sexual minority families having better outcomes in some categories. Some of the risk factors that can explain low performance in parental relationship and mental health in sexual minority families could be discrimination and stigma faced by the LGBTQ+ community. 
+
+
+
+
+just putting this article here for future reference:  Parental sexual orientation and children’s psychological well-being: 2013-2015 National health interview survey. (Calzo et al., 2019)
+
+
+b) "Role of ethnicity in social anxiety disorder: A cross-sectional survey among health science students" (Jager et al., 2014)
+
+Cross sectional study with survey of 1 - 3 year college students in Cape Town South Africa, majoring in areas of medicine. A total of n = 112 students completed the survey measuring social anxiety, phobia, and effects of ethnicity. South Africa is highly multicultura and multi-ethnic society, also given the countries colonial past. Results yielded were that more than half of the student sample met criteria for social anxiety disorder (54.4%), and increased in response with questions regarding interaction with ethnic groups different from their own (60.8%). The sample has significantly higher rates of SAD then the general population, but not that different from other student samples (prevalence of SAD in college students, suggestive normative development in the lives of college students). Also SAD was more prevalent amongst the women students in the sample which is consistent with other studies in the same area. Ethnicity was also found to influence the intensity of social anxiety symptomalogy, showing that it may be a crucial factor in student intercations within South Africa. 
+
+
+
+
+```{r}
+levels(Household_Pulse_data$RRACE)
+```
+
+
+```{r}
+select1 <- (Household_Pulse_data$MHLTH_NEED != "NA")
+```
+
+```{r}
+select2 <- (Household_Pulse_data$MHLTH_GET != "NA")
+```
+
+
+```{r}
+d_kids <- subset(Household_Pulse_data,select2)
+```
+
+```{r}
+levels(Household_Pulse_data$MHLTH_GET)
+```
+
+
+
+```{r}
+d_kids$MentHealthGetKids <- as.numeric(
+(d_kids$MHLTH_GET == "all children get the mental health treatment they need") |
+(d_kids$MHLTH_GET == "some but not all children") )
+```
+
+
+```{r}
+ddply(d_kids,.(RRACE), summarize, avg = mean(MentHealthGetKids))
+```
+
+
+## Race and Sexual Orientation of Parents -> Mental Health Aid kids receive
+
+```{r}
+ols_out1 <- lm(MentHealthGetKids ~ -1 + RRACE, data = d_kids)
+
+```
+
+```{r}
+stargazer(ols_out1, type = "text")
+```
+
+```{r}
+p_avg_byrace <- ggplot(d_kids, aes(x = RRACE, fill = MHLTH_GET))
+p_avg_byrace + geom_bar(position = "fill") + 
+  scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.85)
+```
+
+```{r}
+levels(Household_Pulse_data$SEXUAL_ORIENTATION)
+```
+
+```{r}
+p_avg_byrace <- ggplot(d_kids, aes(x = RRACE, fill = MHLTH_GET))
+p_avg_byrace + geom_bar(position = "fill") + 
+  scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.85) + 
+  facet_grid(~SEXUAL_ORIENTATION)
+```
+
+
+```{r}
+ols_out2a <- lm(MentHealthGetKids ~ RRACE*SEXUAL_ORIENTATION, data = d_kids)
+
+```
+
+```{r}
+stargazer(ols_out2a, type = "text")
+```
+
+## Race and Education -> Anxiety
+
+```{r}
+levels(Household_Pulse_data$ANXIOUS)
+```
+
+```{r}
+levels(Household_Pulse_data$SOCIAL1)
+```
+
+
+```{r}
+select2 <- (Household_Pulse_data$ANXIOUS != "NA")
+
+d_anxiety <- subset(Household_Pulse_data, select2)
+```
+
+```{r}
+d_anxiety$mentalhealth <- as.numeric(
+  (d_anxiety$ANXIOUS == "no anxiety over past 2 wks") |
+  (d_anxiety$ANXIOUS == "several days anxiety past 2 wks"))
+```
+
+```{r}
+ddply(d_anxiety,.(RRACE), summarize, avg = mean(mentalhealth))
+```
+
+```{r}
+ols_out3a <- lm(mentalhealth ~ RRACE, data = d_anxiety)
+```
+
+```{r}
+stargazer(ols_out3a, type = "text")
+```
+
+
+
+
+```{r}
+p_avg_anxrace <- ggplot(d_anxiety, aes(x = RRACE, fill = ANXIOUS))
+p_avg_anxrace + geom_bar(position = "fill") + 
+  scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.85)
+```
+
+```{r}
+ols_out4a <- lm(mentalhealth ~ RRACE*RHISPANIC, data = d_anxiety)
+```
+
+```{r}
+stargazer(ols_out4a, type = "text")
+```
+
+```{r}
+p_avg_anxrace <- ggplot(d_anxiety, aes(x = RRACE, fill = ANXIOUS))
+
+```
+
+```{r}
+p_avg_anxrace + geom_bar(position = "fill") +
+scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.85) +
+facet_grid(~RHISPANIC)
+```
+
+```{r}
+ols_out5a <- lm(mentalhealth ~ RRACE*EEDUC, data = d_anxiety)
+```
+
+```{r}
+stargazer(ols_out5a, type = "text")
+```
+
+```{r}
+p_avg_anxrace <- ggplot(d_kids, aes(x = RRACE, fill = ANXIOUS))
+p_avg_anxrace + geom_bar(position = "fill") +
+scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.85) +
+facet_grid(~EEDUC)
+```
+
